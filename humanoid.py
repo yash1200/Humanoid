@@ -1,6 +1,4 @@
-from Arduino import *
-from Wire import *
-from EEPROM import*
+from datetime import *
 from Adafruit_PWMServoDriver import *
 import bluetooth
 import threading
@@ -16,7 +14,7 @@ class Server:
 	def run_server(self):
 		print('started')
 		while True:
-			print('running')
+			print 'running'
 			self.client,a=self.sock.accept()
 			cThread=threading.Thread(target=self.handler,args=(c,a))
 			cThread.deamon=True
@@ -26,7 +24,7 @@ class Server:
 
 	def handler(self,c,a):
 		try:
-			while True:
+			while True: # HAS POTENTIAL TO CREATE PROBLEMS MAY ADD GARBAGE DATA
 				self.data=data+c.recv(1024)
 				print(data)
 		except:
@@ -119,7 +117,7 @@ class Program:
 						self.pwm1.setPWM(i,0,0)
 					else:
 						self.pwm1.setPWM(i,0,self.pulsewidth(ang[i]))
-					delay(a)
+					time.sleep(1)# WILL SLEEP FOR 1 SEC TODO CHANGE TO LESSER INTERVAL
 		else:
 			for i in range(16):
 				self.comm.send(msg)
@@ -127,7 +125,7 @@ class Program:
 				self.comm.send("-")
 				self.comm.send(self.ang[i])
 				self.pwm1.setPWM(i, 0, self.pulseWidth(self.ang[i]))
-				delay(a)
+				time.sleep(1)
 
 	def pulsewidth(self):
 		pass
@@ -135,7 +133,7 @@ class Program:
 	def startup(self):
 		for i in range(16):
 			self.pwm1.setPWM(i,0,0)
-			delay(50)
+			time.sleep(1)
 		self.b = self.inipos
 		self.comm.send(b)
 		self.serialread(b)
