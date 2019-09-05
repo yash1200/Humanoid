@@ -39,7 +39,7 @@ class Server:
 	def read(self):
 		retval = self.data
 		self.data = ""
-		return data
+		return retval
 
 	def connected(self):
 		return self.connected
@@ -85,8 +85,13 @@ class Program:
 
 	def serialread(self,s):
 		sl = s.split(",")
-		sl.pop()
-		return self.mirror(sl)
+		s=[]
+		for i in range(16):
+			if i !=15:
+				s.append(int(sl[i]))
+			else:
+				s.append(int(sl[i][:-2]))
+		return self.mirror(s)
 
 	def mirror(self,l):
 		r=[]
@@ -137,4 +142,5 @@ class Program:
 		self.inputservo(0)
 
 humanoid = Program()
-humanoid.RUN()
+while True:
+	humanoid.RUN()
