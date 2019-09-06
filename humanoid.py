@@ -12,7 +12,7 @@ class Server:
 		self.connected = False
 
 	def run_server(self):
-		print('started')
+		print 'started' 
 		while True:
 			print 'running'
 			self.client,a=self.sock.accept()
