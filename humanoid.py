@@ -19,7 +19,7 @@ class Server:
 			cThread=threading.Thread(target=self.handler,args=(c,a))
 			cThread.deamon=True
 			cThread.start()
-			print(str(a[0])+':'+str(a[1])+'connected')
+			print str(a[0])+':'+str(a[1])+'connected'
 			self.connected = True
 
 	def handler(self,c,a):
@@ -75,7 +75,7 @@ class Program:
 				self.comm.send("servos detached");#stopall the servos
 				self.b=''
 		else:
-			Serial.println("Servo Input Recieved");
+			self.comm.send("Servo Input Recieved");
 			self.tempinputpos = self.b;
 			self.serialread(self.b);
 			self.b=''
