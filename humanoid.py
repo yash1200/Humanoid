@@ -26,7 +26,7 @@ class Server:
 		try:
 			while True: # HAS POTENTIAL TO CREATE PROBLEMS MAY ADD GARBAGE DATA
 				self.data=data+c.recv(1024)
-				print(data)
+				print data
 		except:
 			c.close()
 
@@ -57,8 +57,8 @@ class Program:
 		self.comm.run_server()
 
 	def RUN(self):
-		self.b = self.comm.read()
 		if(self.comm.connected()):
+			self.b = self.comm.read()
 			self.comm.send(self.b)
 			if (self.b=="calib"):
 				self.ang = self.serialread(inipos);
@@ -71,7 +71,7 @@ class Program:
 				self.prevangle[0]=-1;
 				for i in range(16):
 					self.pwm1.setPWM(i, 0, 0);
-					delay(50);
+					time.sleep(1)
 				self.comm.send("servos detached");#stopall the servos
 				self.b=''
 		else:
