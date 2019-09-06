@@ -1,18 +1,53 @@
 import bluetooth
 import threading
-from __future__ import division
+#from __future__ import division
 import time
 import sys
 import Adafruit_PCA9685
+import pymssql
+import MySQLdb
+
+
 
 inputcomp = False
 servo_min = 140  # Min pulse length out of 4096
 servo_max = 590  # Max pulse length out of 4096
 prevangle=[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+inipos="90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,90;"
+ang=[]
+
 
 
 pwm = Adafruit_PCA9685.PCA9685()
 pwm.set_pwm_freq(60)
+
+
+def getinipos():
+    
+    db = MySQLdb.connect("localhost", "sa", "123hex", "Humanoid")
+    curs=db.cursor()
+    curs.execute("Select inipos from init_pos;")
+    res=curs.fetchall()
+    for row in res:
+        print("reading init pos")
+        print(row[0])
+        inipos = row[0]
+    curs.close()
+    db.close()
+    return inipos
+
+def saveinipos(pos):
+    global inipos
+    db = MySQLdb.connect("localhost", "sa", "123hex", "Humanoid")
+    curs=db.cursor()
+    curs.execute("update init_pos set inipos = '{}' where id = 0; select '1' as command")
+    res=curs.fetchall()
+    for row in res:
+        if(row[0]=="1"):
+            print("save success")
+    curs.close()
+    db.close()
+    
 
 
 def pulsewidth(value):
@@ -20,7 +55,7 @@ def pulsewidth(value):
     leftSpan = 180
     rightSpan = servo_max-servo_min
     valueScaled = float(value) / float(leftSpan)
-    return servo_min + (valueScaled * rightSpan)
+    return int(servo_min + (valueScaled * rightSpan))
 
 def mirror(l):
     r=[]
@@ -36,12 +71,15 @@ def serialread(s):
     sl = s.split(",")
     s=[]
     for i in range(16):
+        #print(s1[i])
         s.append(int(sl[i]))
-    return self.mirror(s)
+    return mirror(s)
 
 
 def serialprint(msg):
     global client_sock,connected
+    msg=str(msg)
+    print(msg)
     if(connected):
         client_sock.send(msg)
 
@@ -53,34 +91,45 @@ def inputservo(ang,a):
 	msg = "fast moving"
     else:
 	msg = "slow moving"
-    if self.prevangle[0]!=-1:
+    if prevangle[0]!=-1:
         for i in range(16):
 	    if ang[i]!=prevangle[i]:
-                serialprint(msg)
-                serialprint(i)
-		serialprint("-")
-		serialprint(self.ang[i])
-		if self.ang[i]==-2 or self.ang[i]==182:
+                serialprint(msg+" "+str(i)+"-"+str(ang[i]))
+                prevangle[i]=ang[i]
+		if ang[i]==-2 or ang[i]==182:
 		    pwm.set_pwm(i,0,0)
 		else:
 		    self.pwm1.setPWM(i,0,pulsewidth(ang[i]))
 		    time.sleep(a)
-	    else:
-                for i in range(16):
-		    serialprint(msg)
-		    serialprint(i)
-		    serialprint("-")
-		    serialprint(ang[i])
-		    pwm.set_pwm(i, 0, pulseWidth(ang[i]))
-		    time.sleep(a)
+    else:
+        for i in range(16):
+	    serialprint(msg+" "+str(i)+"-"+str(ang[i]))
+	    pwm.set_pwm(i, 0, pulsewidth(ang[i]))
+	    time.sleep(a)
 
 
     
    ## pwm.set_pwm(i, 0, 0)
 
 
+def detach():
+    global pwm
+    for i in range(16):
+        pwm.set_pwm(i, 0, 0)
+        time.sleep(0.01)
 
 
+def startup():
+    global ang,pwm
+    detach()
+    inipos = getinipos()
+    inipos=inipos[:-1]
+    ang=serialread(inipos)
+    inputservo(ang,0.1)
+
+
+
+    
 
 while(1):
     server_sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
@@ -97,22 +146,34 @@ while(1):
                 if(data[-1] == ";"):
                     data = data[:-1]
                     inputcomp = True
-                    print(data)
+                    #print(data)
                 if(inputcomp):
                     if(data=="start"):
-                        print("start function call")
+                        #print("start function call")
+                        startup()
+                        #serialprint("startup")
                     elif(data=="detach"):
-                        print("detach function call")
+                        detach()
+                        serialprint("detach")
+                        #print("detach function call")
                     elif(data=="saveinit"):
-                        print("saveinit function call")
+                        setinitpos(data+";")
+                        #print("saveinit function call")
                     else :
-                        ang[]=serialread(data)
-                        inputservo(ang,0)
+                        ang=serialread(data)
                         print("positions recieved")
-        except:
-            print("connection from used disconnected")
+                        inputservo(ang,0)
+                        
+        
+        
+        except(bluetooth.btcommon.BluetoothError):
+            print("connection from user disconnected")
             connected = False
             break
+        except(KeyboardInterrupt, SystemExit):
+            print("detaching servos")
+            detach()
+            sys.exit()
         
             
         
