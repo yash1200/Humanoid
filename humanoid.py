@@ -12,21 +12,21 @@ class Server:
 		self.connected = False
 
 	def run_server(self):
-		print('started')
+		print 'started' 
 		while True:
 			print 'running'
 			self.client,a=self.sock.accept()
 			cThread=threading.Thread(target=self.handler,args=(c,a))
 			cThread.deamon=True
 			cThread.start()
-			print(str(a[0])+':'+str(a[1])+'connected')
+			print str(a[0])+':'+str(a[1])+'connected'
 			self.connected = True
 
 	def handler(self,c,a):
 		try:
 			while True: # HAS POTENTIAL TO CREATE PROBLEMS MAY ADD GARBAGE DATA
 				self.data=data+c.recv(1024)
-				print(data)
+				print data
 		except:
 			c.close()
 
@@ -71,11 +71,11 @@ class Program:
 				self.prevangle[0]=-1;
 				for i in range(16):
 					self.pwm1.setPWM(i, 0, 0);
-					delay(50);
+					time.sleep(1)
 				self.comm.send("servos detached");#stopall the servos
 				self.b=''
 		else:
-			Serial.println("Servo Input Recieved");
+			self.comm.send("Servo Input Recieved");
 			self.tempinputpos = self.b;
 			self.serialread(self.b);
 			self.b=''
